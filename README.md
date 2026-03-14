@@ -92,11 +92,20 @@ streamlit run app/ui.py
 
 During our automated algorithm evaluation, multiple models were tested. The **Random Forest Regressor** was selected for production due to its superior capability in handling non-linear retail trends and minimizing error.
 
-| Algorithm | Mean Absolute Error (MAE) | R² Score |
-| :--- | :--- | :--- |
-| Baseline (Linear Regression) | 409.93 | 24.79% |
-| **Production (Random Forest)** | **101.60** | **90.14%** |
-| XGBoost | 108.62 | 90.34% |
+| Algorithm | Root Mean Sq. Error (RMSE) | Mean Absolute Error (MAE) | R² Score |
+| :--- | :--- | :--- | :--- |
+| Baseline (Linear Regression) | 960.12 | 409.93 | 24.79% |
+| **Production (Random Forest)** | **347.63** | **101.60** | **90.14%** |
+| XGBoost | 344.03 | 108.62 | 90.34% |
+
+---
+
+## ⚠️ Challenges & Mitigations
+
+*   **Scale & Memory Boundaries:** The core dataset consisted of highly relational tables with >3 million training rows. Loading and merging 5 massive dataset schemas simultaneously caused high localized memory pressure. 
+    *   *Mitigation:* Built custom modular sampling logic in the training pipeline (`sample_frac`) to iterate rapidly during early development, and optimized memory payload by automatically discarding unused high-cardinality text (like deep holiday descriptions) prior to encoding.
+*   **Complex Hierarchical Merging:** Incorporating external macro effects introduced complex `NaN` values. For example, WTI crude oil prices are tracked on weekdays, but grocery stores remain fully operational on weekends, causing large data gaps.
+    *   *Mitigation:* Engineered a resilient Pandas `ffill().bfill()` (forward-fill / backward-fill) sequence to carry the Friday oil price through the weekend, ensuring continuous economic context without crashing the downstream regression tree logic.
 
 ---
 
